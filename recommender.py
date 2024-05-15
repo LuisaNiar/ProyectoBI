@@ -68,8 +68,8 @@ class Recommender:
 
 
         # Define the minimum support threshold
-        minsup = 4
-        min_confidence = 0.5
+        minsup = 500
+        min_confidence = 0.75
 
         # Initialize P with unique items and their transactions
         P = defaultdict(set)
