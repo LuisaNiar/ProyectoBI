@@ -85,6 +85,7 @@ class Recommender:
         rules = generate_association_rules(F, min_confidence)
 
         # Additional logic or storage of the trained model can be added here if needed
+        self=rules
 
         # Return the object itself
         return self
