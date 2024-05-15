@@ -1,0 +1,71 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyPGDiYCHZ+a2dieQbeG1TYe"
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "nuNBQ5JyZnVJ"
+      },
+      "outputs": [],
+      "source": [
+        "import numpy as np\n",
+        "\n",
+        "\n",
+        "class Recommender:\n",
+        "\n",
+        "    def __init__(self):\n",
+        "        self.compra = None\n",
+        "        self.base_datos = None\n",
+        "        self.item_a_item = None\n",
+        "\n",
+        "\n",
+        "    def train(self, prices, database) -> None:\n",
+        "        \"\"\"\n",
+        "            allows the recommender to learn which items exist, which prices they have, and which items have been purchased together in the past\n",
+        "            :param prices: a list of prices in USD for the items (the item ids are from 0 to the length of this list - 1)\n",
+        "            :param database: a list of lists of item ids that have been purchased together. Every entry corresponds to one transaction\n",
+        "            :return: the object should return itself here (this is actually important!)\n",
+        "        \"\"\"\n",
+        "\n",
+        "        # do something\n",
+        "\n",
+        "        # return this object again\n",
+        "        return self\n",
+        "\n",
+        "    def get_recommendations(self, cart:list, max_recommendations:int) -> list:\n",
+        "        \"\"\"\n",
+        "            makes a recommendation to a specific user\n",
+        "\n",
+        "            :param cart: a list with the items in the cart\n",
+        "            :param max_recommendations: maximum number of items that may be recommended\n",
+        "            :return: list of at most `max_recommendations` items to be recommended\n",
+        "        \"\"\"\n",
+        "        return [42]  # always recommends the same item (requires that there are at least 43 items)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# New Section"
+      ],
+      "metadata": {
+        "id": "Wunp2GkPPJ8T"
+      }
+    }
+  ]
+}
