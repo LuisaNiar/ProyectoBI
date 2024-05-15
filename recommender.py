@@ -1,6 +1,5 @@
 import numpy as np
 import itertools
-import pandas as pd
 from collections import defaultdict
 
 
@@ -63,8 +62,6 @@ class Recommender:
                     return rsup
             return 0
         
-        
-
         # Leer las transacciones del archivo .dat
         transactions = database
 
@@ -81,10 +78,9 @@ class Recommender:
         # Calcular los itemsets frecuentes utilizando el algoritmo Eclat
         F = []
         eclat(P, minsup, [], F)
-
+        
         # Generar reglas de asociación a partir de los itemsets frecuentes
-        rules = generate_association_rules(F, min_confidence)
-
+        self = generate_association_rules(F, min_confidence)
         
         """
             allows the recommender to learn which items exist, which prices they have, and which items have been purchased together in the past
