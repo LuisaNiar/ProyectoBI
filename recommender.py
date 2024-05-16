@@ -3,28 +3,16 @@ import itertools
 from collections import defaultdict
 
 class Recommender:
-    """
-        This is the class to make recommendations.
-        The class must not require any mandatory arguments for initialization.
-    """
     def train(self, prices, database) -> None:
-        def eclat(P, minsup, prefix, F):
-            num_transactions = len(database)
+        def eclat(P, minsup, prefix, F, num_transactions):
             for Xa, t_Xa in P.items():
-                support_Xa = len(t_Xa)  # Calcula el soporte directamente
-                rsup_Xa = support_Xa / num_transactions  # Calcula el soporte relativo
+                support_Xa = len(t_Xa)
                 if support_Xa >= minsup:
-                    F.append((prefix + [Xa], support_Xa, rsup_Xa))  # Almacena el itemset y su soporte
-                    Pa = {}
-                    for Xb, t_Xb in P.items():
-                        if Xb > Xa:
-                            t_Xab = t_Xa & t_Xb
-                            support_Xab = len(t_Xab)  # Calcula el soporte directamente
-                            rsup_Xab = support_Xab / num_transactions  # Calcula el soporte relativo
-                            if support_Xab >= minsup:
-                                Pa[Xb] = t_Xab
+                    rsup_Xa = support_Xa / num_transactions
+                    F.append((prefix + [Xa], support_Xa, rsup_Xa))
+                    Pa = {Xb: t_Xa & t_Xb for Xb, t_Xb in P.items() if Xb > Xa}
                     if Pa:
-                        eclat(Pa, minsup, prefix + [Xa], F)
+                        eclat(Pa, minsup, prefix + [Xa], F, num_transactions)
 
         def generate_association_rules(frequent_itemsets, min_confidence):
             rules = []
@@ -35,22 +23,19 @@ class Recommender:
                             consequent = tuple(sorted(set(itemset) - set(antecedent)))
                             if consequent:
                                 antecedent_support = get_support(frequent_itemsets, antecedent)
-                                rule_support = support
-                                confidence = rule_support / antecedent_support
+                                confidence = support / antecedent_support
                                 consequent_rsup = get_rsup(frequent_itemsets, consequent)
                                 lift = confidence / consequent_rsup
-                                leverage = rsup - (get_rsup(frequent_itemsets, antecedent) * consequent_rsup)
+                                leverage = rsup - (antecedent_support / len(database) * consequent_rsup)
 
-                                # Calculate profits using antecedent, consequent, and prices
                                 profits = calculate_profits(consequent, prices)
 
-                                if 1 > confidence >= min_confidence and 0.5 > leverage > 0 and lift > 1:
+                                if confidence >= min_confidence and leverage > 0 and lift > 1:
                                     rules.append((antecedent, consequent, profits, confidence, lift, leverage))
             return rules
 
         def calculate_profits(consequent, prices):
-            consequent_prices = [prices[item_id] for item_id in consequent]
-            return sum(consequent_prices)
+            return sum(prices[item_id] for item_id in consequent)
 
         def get_support(frequent_itemsets, itemset):
             for fi, support, _ in frequent_itemsets:
@@ -65,7 +50,7 @@ class Recommender:
             return 0
 
         # Definir el umbral mínimo de soporte como el 20% de la longitud de la lista de precios
-        minsup = max(1, int(0.2 * len(prices)))  # Asegurarse de que minsup sea al menos 1
+        minsup = max(1, int(0.2 * len(prices)))
         min_confidence = 0.1
 
         # Inicializar P con los ítems únicos y sus transacciones
@@ -74,51 +59,31 @@ class Recommender:
             for item in transaction:
                 P[item].add(tid)
 
+        num_transactions = len(database)
+
         # Calcular los itemsets frecuentes utilizando el algoritmo Eclat
         F = []
-        eclat(P, minsup, [], F)
+        eclat(P, minsup, [], F, num_transactions)
 
         # Generar reglas de asociación a partir de los itemsets frecuentes
         rules = generate_association_rules(F, min_confidence)
 
-        """
-            allows the recommender to learn which items exist, which prices they have, and which items have been purchased together in the past
-            :param prices: a list of prices in USD for the items (the item ids are from 0 to the length of this list - 1)
-            :param database: a list of lists of item ids that have been purchased together. Every entry corresponds to one transaction
-            :return: the object should return itself here (this is actually important!)
-        """
-
-        # do something
         self.rules = rules
         self.prices = prices
-        # return this object again
         return self
 
     def get_recommendations(self, cart: list, max_recommendations: int) -> list:
-        """
-            makes a recommendation to a specific user
-
-            :param cart: a list with the items in the cart
-            :param max_recommendations: maximum number of items that may be recommended
-            :return: list of at most max_recommendations items to be recommended
-        """
         recommendations = defaultdict(float)
+        cart_set = set(cart)
 
-        # Find rules where the cart items are in the antecedent
         for rule in self.rules:
             antecedent, consequent, profits, confidence, lift, leverage = rule
-            if set(antecedent).issubset(set(cart)):
+            if set(antecedent).issubset(cart_set):
                 for item in consequent:
-                    if item not in cart:  # Avoid recommending items already in the cart
+                    if item not in cart_set:
                         recommendations[item] += lift
 
-        # Sort recommendations by lift (or any other measure) and return the top ones
         sorted_recommendations = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)
         recommended_items = [item for item, _ in sorted_recommendations[:max_recommendations]]
 
-        # Calculate total profits of recommended items
-        total_profits = sum([self.prices[item] for item in recommended_items])
-
-        print(recommended_items)
-
-        return recommended_items  # always recommends the same item (requires that there are at least 43 items)
+        return recommended_items
