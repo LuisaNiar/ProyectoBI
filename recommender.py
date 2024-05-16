@@ -1,6 +1,5 @@
 import numpy as np
 import itertools
-import pandas as pd
 from collections import defaultdict
 
 
@@ -10,6 +9,15 @@ class Recommender:
         The class must not require any mandatory arguments for initialization.
     """
     def train(self, prices, database) -> None:
+        
+        
+        """
+            allows the recommender to learn which items exist, which prices they have, and which items have been purchased together in the past
+            :param prices: a list of prices in USD for the items (the item ids are from 0 to the length of this list - 1)
+            :param database: a list of lists of item ids that have been purchased together. Every entry corresponds to one transaction
+            :return: the object should return itself here (this is actually important!)
+        """
+        
         def eclat(P, minsup, prefix, F):
             num_transactions = len(database)
             for Xa, t_Xa in P.items():
@@ -68,8 +76,8 @@ class Recommender:
             return 0
 
             # Definir el umbral mínimo de soporte
-        minsup = 4
-        min_confidence = 0.5
+        minsup = 500
+        min_confidence = 0.75
 
         # Inicializar P con los ítems únicos y sus transacciones
         P = defaultdict(set)
@@ -84,16 +92,6 @@ class Recommender:
         # Generar reglas de asociación a partir de los itemsets frecuentes
         rules = generate_association_rules(F, min_confidence)
 
-        """
-            allows the recommender to learn which items exist, which prices they have, and which items have been purchased together in the past
-            :param prices: a list of prices in USD for the items (the item ids are from 0 to the length of this list - 1)
-            :param database: a list of lists of item ids that have been purchased together. Every entry corresponds to one transaction
-            :return: the object should return itself here (this is actually important!)
-        """
-
-        # do something
-
-        # return this object again
         return self
 
     def get_recommendations(self, cart:list, max_recommendations:int) -> list:
