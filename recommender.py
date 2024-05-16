@@ -2,7 +2,6 @@ import numpy as np
 import itertools
 from collections import defaultdict
 
-
 class Recommender:
     """
         This is the class to make recommendations.
@@ -65,8 +64,8 @@ class Recommender:
                     return rsup
             return 0
 
-        # Definir el umbral mínimo de soporte
-        minsup = 10
+        # Definir el umbral mínimo de soporte como el 20% de la longitud de la lista de precios
+        minsup = max(1, int(0.2 * len(prices)))  # Asegurarse de que minsup sea al menos 1
         min_confidence = 0.1
 
         # Inicializar P con los ítems únicos y sus transacciones
@@ -123,3 +122,18 @@ class Recommender:
         print(recommended_items)
 
         return recommended_items  # always recommends the same item (requires that there are at least 43 items)
+
+# Ejemplo de uso
+prices = [0, 1, 2, 3, 4]
+database = [(0, 1, 3, 4), (1, 2, 4), (0, 1, 2, 4), (0, 1, 2, 4), (0, 1, 2, 3, 4), (1, 2, 3)]
+cart = [0, 3]
+max_recommendations = 5
+
+# Initialize the recommender
+recommender = Recommender()
+
+# Train the recommender with actual data
+recommender.train(prices, database)
+
+# Get recommendations
+recommender.get_recommendations(cart, max_recommendations)
