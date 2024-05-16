@@ -2,40 +2,40 @@ import numpy as np
 import itertools
 from collections import defaultdict
 
-
 class Recommender:
     """
         This is the class to make recommendations.
         The class must not require any mandatory arguments for initialization.
     """
+    def _init_(self):
+        self.rules = []
+        self.prices = []
+
     def train(self, prices, database) -> None:
-        
-        
         """
             allows the recommender to learn which items exist, which prices they have, and which items have been purchased together in the past
             :param prices: a list of prices in USD for the items (the item ids are from 0 to the length of this list - 1)
             :param database: a list of lists of item ids that have been purchased together. Every entry corresponds to one transaction
             :return: the object should return itself here (this is actually important!)
         """
-        
+
         def eclat(P, minsup, prefix, F):
             num_transactions = len(database)
             for Xa, t_Xa in P.items():
-                support_Xa = len(t_Xa)  # Calcula el soporte directamente
-                rsup_Xa = support_Xa / num_transactions  # Calcula el soporte relativo
+                support_Xa = len(t_Xa)  # Calculate support directly
+                rsup_Xa = support_Xa / num_transactions  # Calculate relative support
                 if support_Xa >= minsup:
-                    F.append((prefix + [Xa], support_Xa, rsup_Xa))  # Almacena el itemset y su soporte
+                    F.append((prefix + [Xa], support_Xa, rsup_Xa))  # Store itemset and support
                     Pa = {}
                     for Xb, t_Xb in P.items():
                         if Xb > Xa:
                             t_Xab = t_Xa & t_Xb
-                            support_Xab = len(t_Xab)  # Calcula el soporte directamente
-                            rsup_Xab = support_Xab / num_transactions  # Calcula el soporte relativo
+                            support_Xab = len(t_Xab)  # Calculate support directly
+                            rsup_Xab = support_Xab / num_transactions  # Calculate relative support
                             if support_Xab >= minsup:
                                 Pa[Xb] = t_Xab
                     if Pa:
                         eclat(Pa, minsup, prefix + [Xa], F)
-
 
         def generate_association_rules(frequent_itemsets, min_confidence):
             rules = []
@@ -75,22 +75,23 @@ class Recommender:
                     return rsup
             return 0
 
-            # Definir el umbral mínimo de soporte
+        # Set minimum support threshold
         minsup = 500
         min_confidence = 0.75
 
-        # Inicializar P con los ítems únicos y sus transacciones
+        # Initialize P with unique items and their transactions
         P = defaultdict(set)
         for tid, transaction in enumerate(database):
             for item in transaction:
                 P[item].add(tid)
 
-        # Calcular los itemsets frecuentes utilizando el algoritmo Eclat
+        # Compute frequent itemsets using the Eclat algorithm
         F = []
         eclat(P, minsup, [], F)
 
-        # Generar reglas de asociación a partir de los itemsets frecuentes
-        rules = generate_association_rules(F, min_confidence)
+        # Generate association rules from frequent itemsets
+        self.rules = generate_association_rules(F, min_confidence)
+        self.prices = prices
 
         return self
 
@@ -100,8 +101,21 @@ class Recommender:
 
             :param cart: a list with the items in the cart
             :param max_recommendations: maximum number of items that may be recommended
-            :return: list of at most `max_recommendations` items to be recommended
+            :return: list of at most max_recommendations items to be recommended
         """
+        recommendations = defaultdict(float)
+
+        # Find rules where the cart items are in the antecedent
+        for rule in self.rules:
+            antecedent, consequent, profits, confidence, lift, leverage = rule
+            if set(antecedent).issubset(set(cart)):
+                for item in consequent:
+                    recommendations[item] += lift
+
+        # Sort recommendations by lift (or any other measure) and return the top ones
+        sorted_recommendations = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)
+        recommended_items = [item for item, _ in sorted_recommendations[:max_recommendations]]
+
         return [42]  # always recommends the same item (requires that there are at least 43 items)
 
 
