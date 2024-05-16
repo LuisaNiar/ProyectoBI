@@ -120,8 +120,3 @@ class Recommender:
         total_profits = sum([self.prices[item] for item in recommended_items])
 
         return recommended_items[42]  # always recommends the same item (requires that there are at least 43 items)
-
-
-# Initialize the recommender
-recommender = Recommender()
-
