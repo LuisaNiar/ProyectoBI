@@ -28,14 +28,26 @@ class Recommender:
                                 lift = confidence / consequent_rsup
                                 leverage = relative_support - (antecedent_support / len(database) * consequent_rsup)
 
+                                # Calculate odds ratio
+                                odds_ratio = calculate_odds_ratio(support, antecedent_support, consequent_rsup, len(database))
+
                                 profits = calculate_profits(consequent, prices)
 
-                                if confidence >= min_confidence and leverage > 0 and lift > 1:
-                                    rules.append((antecedent, consequent, profits, confidence, lift, leverage))
+                                if confidence >= min_confidence and leverage > 0 and lift > 1 and odds_ratio > 1:
+                                    rules.append((antecedent, consequent, profits, confidence, lift, leverage, odds_ratio))
             return rules
 
         def calculate_profits(consequent, prices):
             return sum(prices[item_id] for item_id in consequent)
+
+        def calculate_odds_ratio(support, antecedent_support, consequent_rsup, num_transactions):
+            consequent_support = consequent_rsup * num_transactions
+            other_support = num_transactions - antecedent_support
+            other_consequent_support = consequent_support - support
+            if other_support == 0 or other_consequent_support == 0:
+                return float('inf')  # Avoid division by zero
+            odds_ratio = (support / other_support) / (other_consequent_support / consequent_support)
+            return odds_ratio
 
         def get_support(frequent_itemsets, itemset):
             itemset_set = set(itemset)
@@ -72,21 +84,18 @@ class Recommender:
 
     def get_recommendations(self, cart: list, max_recommendations: int) -> list:
         recommendations = defaultdict(float)
+        odds_ratios = defaultdict(float)
         cart_set = set(cart)
 
         for rule in self.rules:
-            antecedent, consequent, profits, confidence, lift, leverage = rule
+            antecedent, consequent, profits, confidence, lift, leverage, odds_ratio = rule
             if set(antecedent).issubset(cart_set):
                 for item in consequent:
                     if item not in cart_set:
                         recommendations[item] += lift
+                        odds_ratios[item] = odds_ratio
 
-        sorted_recommendations = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)
-        recommended_items = [item for item, _ in sorted_recommendations[:max_recommendations]]
-
-        return recommended_items
-
-        sorted_recommendations = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)
+        sorted_recommendations = sorted(recommendations.items(), key=lambda x: odds_ratios[x[0]], reverse=True)
         recommended_items = [item for item, _ in sorted_recommendations[:max_recommendations]]
 
         return recommended_items
