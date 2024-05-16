@@ -38,14 +38,16 @@ class Recommender:
             return sum(prices[item_id] for item_id in consequent)
 
         def get_support(frequent_itemsets, itemset):
+            itemset_set = set(itemset)
             for fi, support, _ in frequent_itemsets:
-                if set(fi) == set(itemset):
+                if set(fi) == itemset_set:
                     return support
             return 0
 
         def get_rsup(frequent_itemsets, itemset):
+            itemset_set = set(itemset)
             for fi, _, rsup in frequent_itemsets:
-                if set(fi) == set(itemset):
+                if set(fi) == itemset_set:
                     return rsup
             return 0
 
