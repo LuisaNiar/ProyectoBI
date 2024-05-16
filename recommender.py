@@ -52,7 +52,7 @@ class Recommender:
             return 0
 
         # Definir el umbral mínimo de soporte como el 20% de la longitud de la lista de precios
-        minsup = max(1, int(0.19 * len(prices)))
+        minsup = max(1, int(0.18 * len(prices)))
         min_confidence = 0.1
 
         # Inicializar P con los ítems únicos y sus transacciones
