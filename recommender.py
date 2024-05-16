@@ -66,7 +66,7 @@ class Recommender:
             return 0
 
         # Definir el umbral mínimo de soporte
-        minsup = 5
+        minsup = 10
         min_confidence = 0.1
 
         # Inicializar P con los ítems únicos y sus transacciones
