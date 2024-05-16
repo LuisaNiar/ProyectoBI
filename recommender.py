@@ -33,7 +33,7 @@ class Recommender:
 
                                 profits = calculate_profits(consequent, prices)
 
-                                if confidence >= min_confidence and leverage > 0 and lift > 1 and odds_ratio > 1:
+                                if 1>confidence >= min_confidence and leverage > 0 and lift > 1 and odds_ratio > 1:
                                     rules.append((antecedent, consequent, profits, confidence, lift, leverage, odds_ratio))
             return rules
 
