@@ -91,6 +91,7 @@ class Recommender:
 
         # do something
         self.rules = rules
+        self.prices = prices
         # return this object again
         return self
 
