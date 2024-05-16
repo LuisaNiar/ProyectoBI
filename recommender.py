@@ -1,8 +1,13 @@
 import numpy as np
 import itertools
 from collections import defaultdict
+from multiprocessing import Pool, cpu_count
 
 class Recommender:
+    def __init__(self, minsup=0.2, min_confidence=0.1):
+        self.minsup = minsup
+        self.min_confidence = min_confidence
+
     def train(self, prices, database) -> None:
         def eclat(P, minsup, prefix, F, num_transactions):
             for Xa, t_Xa in P.items():
@@ -14,9 +19,10 @@ class Recommender:
                     if Pa:
                         eclat(Pa, minsup, prefix + [Xa], F, num_transactions)
 
-        def generate_association_rules(frequent_itemsets, min_confidence):
-            rules = []
-            for itemset, support, rsup in frequent_itemsets:
+        def generate_association_rules(frequent_itemsets, min_confidence, prices, database_length):
+            def process_itemset(args):
+                itemset, support, rsup = args
+                rules = []
                 if len(itemset) > 1:
                     for i in range(1, len(itemset)):
                         for antecedent in itertools.combinations(itemset, i):
@@ -26,49 +32,43 @@ class Recommender:
                                 confidence = support / antecedent_support
                                 consequent_rsup = get_rsup(frequent_itemsets, consequent)
                                 lift = confidence / consequent_rsup
-                                leverage = rsup - (antecedent_support / len(database) * consequent_rsup)
-
-                                profits = calculate_profits(consequent, prices)
-
+                                leverage = rsup - (antecedent_support / database_length * consequent_rsup)
+                                profits = sum(prices[item_id] for item_id in consequent)
                                 if confidence >= min_confidence and leverage > 0 and lift > 1:
                                     rules.append((antecedent, consequent, profits, confidence, lift, leverage))
+                return rules
+
+            def get_support(frequent_itemsets, itemset):
+                itemset_set = set(itemset)
+                for fi, support, _ in frequent_itemsets:
+                    if set(fi) == itemset_set:
+                        return support
+                return 0
+
+            def get_rsup(frequent_itemsets, itemset):
+                itemset_set = set(itemset)
+                for fi, _, rsup in frequent_itemsets:
+                    if set(fi) == itemset_set:
+                        return rsup
+                return 0
+
+            args = [(itemset, support, rsup) for itemset, support, rsup in frequent_itemsets]
+            with Pool(cpu_count()) as pool:
+                results = pool.map(process_itemset, args)
+                rules = [rule for sublist in results for rule in sublist]
             return rules
 
-        def calculate_profits(consequent, prices):
-            return sum(prices[item_id] for item_id in consequent)
+        minsup_absolute = max(1, int(self.minsup * len(prices)))
 
-        def get_support(frequent_itemsets, itemset):
-            itemset_set = set(itemset)
-            for fi, support, _ in frequent_itemsets:
-                if set(fi) == itemset_set:
-                    return support
-            return 0
-
-        def get_rsup(frequent_itemsets, itemset):
-            itemset_set = set(itemset)
-            for fi, _, rsup in frequent_itemsets:
-                if set(fi) == itemset_set:
-                    return rsup
-            return 0
-
-        # Definir el umbral mínimo de soporte como el 20% de la longitud de la lista de precios
-        minsup = max(1, int(0.2 * len(prices)))
-        min_confidence = 0.1
-
-        # Inicializar P con los ítems únicos y sus transacciones
         P = defaultdict(set)
         for tid, transaction in enumerate(database):
             for item in transaction:
                 P[item].add(tid)
 
         num_transactions = len(database)
-
-        # Calcular los itemsets frecuentes utilizando el algoritmo Eclat
         F = []
-        eclat(P, minsup, [], F, num_transactions)
-
-        # Generar reglas de asociación a partir de los itemsets frecuentes
-        rules = generate_association_rules(F, min_confidence)
+        eclat(P, minsup_absolute, [], F, num_transactions)
+        rules = generate_association_rules(F, self.min_confidence, prices, num_transactions)
 
         self.rules = rules
         self.prices = prices
