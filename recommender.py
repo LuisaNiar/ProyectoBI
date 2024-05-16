@@ -122,18 +122,3 @@ class Recommender:
         print(recommended_items)
 
         return recommended_items  # always recommends the same item (requires that there are at least 43 items)
-
-# Ejemplo de uso
-prices = [0, 1, 2, 3, 4]
-database = [(0, 1, 3, 4), (1, 2, 4), (0, 1, 2, 4), (0, 1, 2, 4), (0, 1, 2, 3, 4), (1, 2, 3)]
-cart = [0, 3]
-max_recommendations = 5
-
-# Initialize the recommender
-recommender = Recommender()
-
-# Train the recommender with actual data
-recommender.train(prices, database)
-
-# Get recommendations
-recommender.get_recommendations(cart, max_recommendations)
