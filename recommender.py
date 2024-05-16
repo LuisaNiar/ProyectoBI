@@ -66,8 +66,8 @@ class Recommender:
             return 0
 
         # Definir el umbral mínimo de soporte
-        minsup = 50
-        min_confidence = 0.2
+        minsup = 5
+        min_confidence = 0.1
 
         # Inicializar P con los ítems únicos y sus transacciones
         P = defaultdict(set)
