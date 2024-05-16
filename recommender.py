@@ -52,7 +52,7 @@ class Recommender:
             return 0
 
         minsup = max(1, int(0.2 * len(prices)))
-        min_confidence = 0
+        min_confidence = 0.1
 
         item_transactions = defaultdict(set)
         for transaction_id, transaction in enumerate(database):
