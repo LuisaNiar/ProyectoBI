@@ -1,33 +1,28 @@
 import numpy as np
 import itertools
+import pandas as pd
 from collections import defaultdict
+
 
 class Recommender:
     """
         This is the class to make recommendations.
         The class must not require any mandatory arguments for initialization.
     """
-    
-    def train(self, prices, database) -> 'Recommender':
-        """
-            allows the recommender to learn which items exist, which prices they have, and which items have been purchased together in the past
-            :param prices: a list of prices in USD for the items (the item ids are from 0 to the length of this list - 1)
-            :param database: a list of lists of item ids that have been purchased together. Every entry corresponds to one transaction
-            :return: the object should return itself here (this is actually important!)
-        """
+    def train(self, prices, database) -> None:
         def eclat(P, minsup, prefix, F):
             num_transactions = len(database)
             for Xa, t_Xa in P.items():
-                support_Xa = len(t_Xa)  # Calculate support directly
-                rsup_Xa = support_Xa / num_transactions  # Calculate relative support
+                support_Xa = len(t_Xa)  # Calcula el soporte directamente
+                rsup_Xa = support_Xa / num_transactions  # Calcula el soporte relativo
                 if support_Xa >= minsup:
-                    F.append((prefix + [Xa], support_Xa, rsup_Xa))  # Store itemset and its support
+                    F.append((prefix + [Xa], support_Xa, rsup_Xa))  # Almacena el itemset y su soporte
                     Pa = {}
                     for Xb, t_Xb in P.items():
                         if Xb > Xa:
                             t_Xab = t_Xa & t_Xb
-                            support_Xab = len(t_Xab)  # Calculate support directly
-                            rsup_Xab = support_Xab / num_transactions  # Calculate relative support
+                            support_Xab = len(t_Xab)  # Calcula el soporte directamente
+                            rsup_Xab = support_Xab / num_transactions  # Calcula el soporte relativo
                             if support_Xab >= minsup:
                                 Pa[Xb] = t_Xab
                     if Pa:
@@ -48,10 +43,17 @@ class Recommender:
                                 consequent_rsup = get_rsup(frequent_itemsets, consequent)
                                 lift = confidence / consequent_rsup
                                 leverage = rsup - (get_rsup(frequent_itemsets, antecedent) * consequent_rsup)
+
+                                # Calculate profits using antecedent, consequent, and prices
+                                profits = calculate_profits(consequent, prices)
+
                                 if 1 > confidence >= min_confidence and leverage > 0 and lift > 1:
-                                    rules.append((antecedent, consequent, confidence, lift, leverage))
+                                    rules.append((antecedent, consequent, profits, confidence, lift, leverage))
             return rules
 
+        def calculate_profits(consequent, prices):
+            consequent_prices = [prices[item_id] for item_id in consequent]
+            return sum(consequent_prices)
 
         def get_support(frequent_itemsets, itemset):
             for fi, support, _ in frequent_itemsets:
@@ -59,43 +61,49 @@ class Recommender:
                     return support
             return 0
 
-
         def get_rsup(frequent_itemsets, itemset):
             for fi, _, rsup in frequent_itemsets:
                 if set(fi) == set(itemset):
                     return rsup
             return 0
 
+            # Definir el umbral mínimo de soporte
+        minsup = 4
+        min_confidence = 0.5
 
-        # Define the minimum support threshold
-        minsup = 500
-        min_confidence = 0.75
-
-        # Initialize P with unique items and their transactions
+        # Inicializar P con los ítems únicos y sus transacciones
         P = defaultdict(set)
         for tid, transaction in enumerate(database):
             for item in transaction:
                 P[item].add(tid)
 
-        # Calculate frequent itemsets using the Eclat algorithm
+        # Calcular los itemsets frecuentes utilizando el algoritmo Eclat
         F = []
         eclat(P, minsup, [], F)
 
-        # Generate association rules from frequent itemsets
+        # Generar reglas de asociación a partir de los itemsets frecuentes
         rules = generate_association_rules(F, min_confidence)
 
-        # Additional logic or storage of the trained model can be added here if needed
-        self=rules
+        """
+            allows the recommender to learn which items exist, which prices they have, and which items have been purchased together in the past
+            :param prices: a list of prices in USD for the items (the item ids are from 0 to the length of this list - 1)
+            :param database: a list of lists of item ids that have been purchased together. Every entry corresponds to one transaction
+            :return: the object should return itself here (this is actually important!)
+        """
 
-        # Return the object itself
+        # do something
+
+        # return this object again
         return self
 
     def get_recommendations(self, cart:list, max_recommendations:int) -> list:
         """
             makes a recommendation to a specific user
-            
+
             :param cart: a list with the items in the cart
             :param max_recommendations: maximum number of items that may be recommended
             :return: list of at most `max_recommendations` items to be recommended
         """
         return [42]  # always recommends the same item (requires that there are at least 43 items)
+
+
