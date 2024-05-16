@@ -1,6 +1,7 @@
 import numpy as np
 import itertools
 from collections import defaultdict
+from multiprocessing import Pool, cpu_count
 
 class Recommender:
     def train(self, prices, database) -> None:
@@ -15,8 +16,9 @@ class Recommender:
                         eclat(Pa, minsup, prefix + [Xa], F, num_transactions)
 
         def generate_association_rules(frequent_itemsets, min_confidence):
-            rules = []
-            for itemset, support, rsup in frequent_itemsets:
+            def process_itemset(itemset_support_rsup):
+                itemset, support, rsup = itemset_support_rsup
+                rules = []
                 if len(itemset) > 1:
                     for i in range(1, len(itemset)):
                         for antecedent in itertools.combinations(itemset, i):
@@ -27,11 +29,14 @@ class Recommender:
                                 consequent_rsup = get_rsup(frequent_itemsets, consequent)
                                 lift = confidence / consequent_rsup
                                 leverage = rsup - (antecedent_support / len(database) * consequent_rsup)
-
                                 profits = calculate_profits(consequent, prices)
-
                                 if confidence >= min_confidence and leverage > 0 and lift > 1:
                                     rules.append((antecedent, consequent, profits, confidence, lift, leverage))
+                return rules
+
+            with Pool(cpu_count()) as pool:
+                results = pool.map(process_itemset, frequent_itemsets)
+                rules = [rule for sublist in results for rule in sublist]
             return rules
 
         def calculate_profits(consequent, prices):
