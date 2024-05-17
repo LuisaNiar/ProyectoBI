@@ -76,6 +76,18 @@ class Recommender:
         self.rules = rules
         self.prices = prices
         self.frequent_itemsets = F
+
+        # Imprimir itemsets frecuentes
+        print(f"{'Itemset':<20} {'Support':<10} {'Relative Support':<10}")
+        for itemset, support, rsup in self.frequent_itemsets:
+            print(f"{str(itemset):<20} {support:<10} {rsup:<10.2f}")
+
+        # Imprimir reglas de asociación
+        print(f"{'Antecedent':<20} {'Consequent':<20} {'Profit':<10} {'Confidence':<10} {'Lift':<10} {'Leverage':<10} {'Conviction':<10}")
+        for rule in self.rules:
+            antecedent, consequent, profits, confidence, lift, leverage, conviction = rule
+            print(f"{str(antecedent):<20} {str(consequent):<20} {profits:<10.2f} {confidence:<10.2f} {lift:<10.2f} {leverage:<10.2f} {conviction:<10.2f}")
+
         return self
 
     def get_recommendations(self, cart: list, max_recommendations: int) -> list:
@@ -91,5 +103,8 @@ class Recommender:
 
         sorted_recommendations = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)
         recommended_items = [item for item, _ in sorted_recommendations[:max_recommendations]]
+
+        # Imprimir recomendaciones
+        print("Recomendaciones:", recommended_items)
 
         return recommended_items
