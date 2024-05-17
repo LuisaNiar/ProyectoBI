@@ -93,20 +93,3 @@ class Recommender:
         recommended_items = [item for item, _ in sorted_recommendations[:max_recommendations]]
 
         return recommended_items
-
-    def print_rules(self):
-        print(f"{'Antecedent':<20} {'Consequent':<20} {'Profit':<10} {'Confidence':<10} {'Lift':<10} {'Leverage':<10} {'Conviction':<10}")
-        for rule in self.rules:
-            antecedent, consequent, profits, confidence, lift, leverage, conviction = rule
-            print(f"{str(antecedent):<20} {str(consequent):<20} {profits:<10.2f} {confidence:<10.2f} {lift:<10.2f} {leverage:<10.2f} {conviction:<10.2f}")
-
-    def print_frequent_itemsets(self):
-        print(f"{'Itemset':<20} {'Support':<10} {'Relative Support':<10}")
-        for itemset, support, rsup in self.frequent_itemsets:
-            print(f"{str(itemset):<20} {support:<10} {rsup:<10.2f}")
-
-cart = [0, 1]
-max_recommendations = 2
-
-recommendations = recommender.get_recommendations(cart, max_recommendations)
-print("Recomendaciones:", recommendations)
