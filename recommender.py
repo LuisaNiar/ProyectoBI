@@ -106,7 +106,7 @@ class Recommender:
             if set(antecedent).issubset(cart_set):
                 for item in consequent:
                     if item not in cart_set:
-                        recommendations[item] = profits
+                        recommendations[item] = +profits
 
         sorted_recommendations = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)
         recommended_items = [item for item, _ in sorted_recommendations[:max_recommendations]]
