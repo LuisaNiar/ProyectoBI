@@ -7,12 +7,13 @@ class Recommender:
         def eclat(P, minsup, prefix, F, num_transactions):
             for Xa, t_Xa in P.items():
                 support_Xa = len(t_Xa)
-                if support_Xa >= minsup:
-                    rsup_Xa = support_Xa / num_transactions
-                    F.append((prefix + [Xa], support_Xa, rsup_Xa))
-                    Pa = {Xb: t_Xa & t_Xb for Xb, t_Xb in P.items() if Xb > Xa}
-                    if Pa:
-                        eclat(Pa, minsup, prefix + [Xa], F, num_transactions)
+                rsup_Xa = support_Xa / num_transactions
+                if rsup_Xa > 0:  # Filtrar elementos con soporte relativo 0
+                    if support_Xa >= minsup:
+                        F.append((prefix + [Xa], support_Xa, rsup_Xa))
+                        Pa = {Xb: t_Xa & t_Xb for Xb, t_Xb in P.items() if Xb > Xa}
+                        if Pa:
+                            eclat(Pa, minsup, prefix + [Xa], F, num_transactions)
 
         def generate_association_rules(frequent_itemsets, min_confidence):
             rules = []
