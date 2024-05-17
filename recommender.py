@@ -29,9 +29,10 @@ class Recommender:
                                 leverage = rsup - (antecedent_support / len(database) * consequent_rsup)
 
                                 profits = calculate_profits(consequent, prices)
+                                conviction = (1 - consequent_rsup) / (1 - confidence) if confidence < 1 else float('inf')
 
                                 if confidence >= min_confidence and leverage > 0 and lift > 1:
-                                    rules.append((antecedent, consequent, profits, confidence, lift, leverage))
+                                    rules.append((antecedent, consequent, profits, confidence, lift, leverage, conviction))
             # Ordenar las reglas por ganancia (profits) de mayor a menor
             rules.sort(key=lambda x: x[2], reverse=True)
             return rules
@@ -81,7 +82,7 @@ class Recommender:
         cart_set = set(cart)
 
         for rule in self.rules:
-            antecedent, consequent, profits, confidence, lift, leverage = rule
+            antecedent, consequent, profits, confidence, lift, leverage, conviction = rule
             if set(antecedent).issubset(cart_set):
                 for item in consequent:
                     if item not in cart_set:
@@ -89,5 +90,5 @@ class Recommender:
 
         sorted_recommendations = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)
         recommended_items = [item for item, _ in sorted_recommendations[:max_recommendations]]
-        print(sorted_recommendations)
+
         return recommended_items
