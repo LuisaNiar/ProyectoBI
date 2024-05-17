@@ -4,7 +4,11 @@ import pandas as pd
 from collections import defaultdict
 
 class Recommender:
-    def train(self, prices, database, margins) -> None:
+    # Predefinimos los precios y los márgenes como atributos de clase
+    prices = [0, 1, 2, 3, 4]
+    margins = [0, 0.5, 1, 1.5, 2]  # Márgenes de beneficio de los productos
+
+    def train(self, prices, database) -> None:
         def eclat(P, minsup, prefix, F, num_transactions):
             for Xa, t_Xa in P.items():
                 support_Xa = len(t_Xa)
@@ -29,14 +33,14 @@ class Recommender:
                                 lift = confidence / consequent_rsup
                                 leverage = rsup - (antecedent_support / len(database) * consequent_rsup)
 
-                                profits = calculate_profits(consequent, prices, margins)
+                                profits = calculate_profits(consequent)
 
                                 if confidence >= min_confidence and leverage > 0 and lift > 1:
                                     rules.append((antecedent, consequent, profits, confidence, lift, leverage))
             return rules
 
-        def calculate_profits(consequent, prices, margins):
-            return sum(margins[item_id] for item_id in consequent)
+        def calculate_profits(consequent):
+            return sum(Recommender.margins[item_id] for item_id in consequent)
 
         def get_support(frequent_itemsets, itemset):
             itemset_set = set(itemset)
@@ -94,7 +98,6 @@ class Recommender:
 
         self.rules = rules
         self.prices = prices
-        self.margins = margins
 
         return self
 
