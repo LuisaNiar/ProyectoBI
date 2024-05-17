@@ -4,19 +4,19 @@ from collections import defaultdict
 
 class Recommender:
     def train(self, prices, database) -> None:
-        def eclat(itemsets, minsup, prefix, frequent_itemsets, num_transactions):
-            for item, transactions in itemsets.items():
-                support_count = len(transactions)
-                if support_count >= minsup:
-                    relative_support = support_count / num_transactions
-                    frequent_itemsets.append((prefix + [item], support_count, relative_support))
-                    new_itemsets = {item_next: transactions & transactions_next for item_next, transactions_next in itemsets.items() if item_next > item}
-                    if new_itemsets:
-                        eclat(new_itemsets, minsup, prefix + [item], frequent_itemsets, num_transactions)
+        def eclat(P, minsup, prefix, F, num_transactions):
+            for Xa, t_Xa in P.items():
+                support_Xa = len(t_Xa)
+                if support_Xa >= minsup:
+                    rsup_Xa = support_Xa / num_transactions
+                    F.append((prefix + [Xa], support_Xa, rsup_Xa))
+                    Pa = {Xb: t_Xa & t_Xb for Xb, t_Xb in P.items() if Xb > Xa}
+                    if Pa:
+                        eclat(Pa, minsup, prefix + [Xa], F, num_transactions)
 
         def generate_association_rules(frequent_itemsets, min_confidence):
             rules = []
-            for itemset, support, relative_support in frequent_itemsets:
+            for itemset, support, rsup in frequent_itemsets:
                 if len(itemset) > 1:
                     for i in range(1, len(itemset)):
                         for antecedent in itertools.combinations(itemset, i):
@@ -26,28 +26,18 @@ class Recommender:
                                 confidence = support / antecedent_support
                                 consequent_rsup = get_rsup(frequent_itemsets, consequent)
                                 lift = confidence / consequent_rsup
-                                leverage = relative_support - (antecedent_support / len(database) * consequent_rsup)
-
-                                # Calculate odds ratio
-                                odds_ratio = calculate_odds_ratio(support, antecedent_support, consequent_rsup, len(database))
+                                leverage = rsup - (antecedent_support / len(database) * consequent_rsup)
 
                                 profits = calculate_profits(consequent, prices)
 
-                                if 1>confidence >= min_confidence and leverage > 0 and lift > 1 and odds_ratio > 1:
-                                    rules.append((antecedent, consequent, profits, confidence, lift, leverage, odds_ratio))
+                                if confidence >= min_confidence and leverage > 0 and lift > 1:
+                                    rules.append((antecedent, consequent, profits, confidence, lift, leverage))
+            # Ordenar las reglas por ganancia (profits) de mayor a menor
+            rules.sort(key=lambda x: x[2], reverse=True)
             return rules
 
         def calculate_profits(consequent, prices):
             return sum(prices[item_id] for item_id in consequent)
-
-        def calculate_odds_ratio(support, antecedent_support, consequent_rsup, num_transactions):
-            consequent_support = consequent_rsup * num_transactions
-            other_support = num_transactions - antecedent_support
-            other_consequent_support = consequent_support - support
-            if other_support == 0 or other_consequent_support == 0:
-                return float('inf')  # Avoid division by zero
-            odds_ratio = (support / other_support) / (other_consequent_support / consequent_support)
-            return odds_ratio
 
         def get_support(frequent_itemsets, itemset):
             itemset_set = set(itemset)
@@ -63,20 +53,24 @@ class Recommender:
                     return rsup
             return 0
 
+        # Definir el umbral mínimo de soporte como el 20% de la longitud de la lista de precios
         minsup = max(1, int(0.2 * len(prices)))
         min_confidence = 0.1
 
-        item_transactions = defaultdict(set)
-        for transaction_id, transaction in enumerate(database):
+        # Inicializar P con los ítems únicos y sus transacciones
+        P = defaultdict(set)
+        for tid, transaction in enumerate(database):
             for item in transaction:
-                item_transactions[item].add(transaction_id)
+                P[item].add(tid)
 
         num_transactions = len(database)
 
-        frequent_itemsets = []
-        eclat(item_transactions, minsup, [], frequent_itemsets, num_transactions)
+        # Calcular los itemsets frecuentes utilizando el algoritmo Eclat
+        F = []
+        eclat(P, minsup, [], F, num_transactions)
 
-        rules = generate_association_rules(frequent_itemsets, min_confidence)
+        # Generar reglas de asociación a partir de los itemsets frecuentes
+        rules = generate_association_rules(F, min_confidence)
 
         self.rules = rules
         self.prices = prices
@@ -84,18 +78,16 @@ class Recommender:
 
     def get_recommendations(self, cart: list, max_recommendations: int) -> list:
         recommendations = defaultdict(float)
-        odds_ratios = defaultdict(float)
         cart_set = set(cart)
 
         for rule in self.rules:
-            antecedent, consequent, profits, confidence, lift, leverage, odds_ratio = rule
+            antecedent, consequent, profits, confidence, lift, leverage = rule
             if set(antecedent).issubset(cart_set):
                 for item in consequent:
                     if item not in cart_set:
                         recommendations[item] += lift
-                        odds_ratios[item] = odds_ratio
 
-        sorted_recommendations = sorted(recommendations.items(), key=lambda x: odds_ratios[x[0]], reverse=True)
+        sorted_recommendations = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)
         recommended_items = [item for item, _ in sorted_recommendations[:max_recommendations]]
-
+        print(sorted_recommendations)
         return recommended_items
