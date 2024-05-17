@@ -34,6 +34,9 @@ class Recommender:
                                 if confidence >= min_confidence and leverage > 0 and lift > 1:
                                     rules.append((antecedent, consequent, profits, confidence, lift, leverage))
             return rules
+        
+        # Ordenar las reglas primero por ganancias y luego por confianza + lift y luego por soporte de mayor a menor
+        rules.sort(key=lambda x: (x[2], x[6], x[7]), reverse=True)
 
         def calculate_profits(consequent, prices):
             return sum(prices[item_id] for item_id in consequent)
@@ -103,7 +106,7 @@ class Recommender:
             if set(antecedent).issubset(cart_set):
                 for item in consequent:
                     if item not in cart_set:
-                        recommendations[item] += lift
+                        recommendations[item] += profits
 
         sorted_recommendations = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)
         recommended_items = [item for item, _ in sorted_recommendations[:max_recommendations]]
