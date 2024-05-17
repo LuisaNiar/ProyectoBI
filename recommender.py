@@ -1,3 +1,7 @@
+import numpy as np
+import itertools
+from collections import defaultdict
+
 class Recommender:
     def train(self, prices, database) -> None:
         def eclat(P, minsup, prefix, F, num_transactions):
