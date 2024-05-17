@@ -4,10 +4,6 @@ import pandas as pd
 from collections import defaultdict
 
 class Recommender:
-    # Predefinimos los precios y los márgenes como atributos de clase
-    prices = [0, 1, 2, 3, 4]
-    margins = [0, 0.5, 1, 1.5, 2]  # Márgenes de beneficio de los productos
-
     def train(self, prices, database) -> None:
         def eclat(P, minsup, prefix, F, num_transactions):
             for Xa, t_Xa in P.items():
@@ -33,14 +29,14 @@ class Recommender:
                                 lift = confidence / consequent_rsup
                                 leverage = rsup - (antecedent_support / len(database) * consequent_rsup)
 
-                                profits = calculate_profits(consequent)
+                                profits = calculate_profits(consequent, prices)
 
                                 if confidence >= min_confidence and leverage > 0 and lift > 1:
                                     rules.append((antecedent, consequent, profits, confidence, lift, leverage))
             return rules
 
-        def calculate_profits(consequent):
-            return sum(Recommender.margins[item_id] for item_id in consequent)
+        def calculate_profits(consequent, prices):
+            return sum(prices[item_id] for item_id in consequent)
 
         def get_support(frequent_itemsets, itemset):
             itemset_set = set(itemset)
@@ -121,3 +117,13 @@ class Recommender:
         print(recommended_items)
 
         return recommended_items
+
+# Ejemplo de uso
+prices = [0, 1, 2, 3, 4]
+database = [(0, 1, 3, 4), (1, 2, 4), (0, 1, 2, 4), (0, 1, 2, 4), (0, 1, 2, 3, 4), (1, 2, 3)]
+cart = [1, 4]
+max_recommendations = 5
+
+recommender = Recommender()
+recommender.train(prices, database)
+recommender.get_recommendations(cart, max_recommendations)
