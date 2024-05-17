@@ -117,13 +117,3 @@ class Recommender:
         print(recommended_items)
 
         return recommended_items
-
-# Ejemplo de uso
-prices = [0, 1, 2, 3, 4]
-database = [(0, 1, 3, 4), (1, 2, 4), (0, 1, 2, 4), (0, 1, 2, 4), (0, 1, 2, 3, 4), (1, 2, 3)]
-cart = [1, 4]
-max_recommendations = 5
-
-recommender = Recommender()
-recommender.train(prices, database)
-recommender.get_recommendations(cart, max_recommendations)
