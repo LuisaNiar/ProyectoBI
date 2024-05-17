@@ -34,8 +34,8 @@ class Recommender:
                                 if confidence >= min_confidence and lift > 1:
                                     combined_metric = confidence + lift
                                     rules.append((antecedent, consequent, profits, confidence, lift, conviction, combined_metric, support))
-            # Ordenar las reglas primero por ganancias y luego por la suma de confianza y lift de mayor a menor
-            rules.sort(key=lambda x: (x[2], x[6]), reverse=True)
+            # Ordenar las reglas primero por confianza + lift y luego por soporte de mayor a menor
+            rules.sort(key=lambda x: (x[6], x[7]), reverse=True)
             return rules
 
         def calculate_profits(consequent, prices):
