@@ -26,13 +26,12 @@ class Recommender:
                                 confidence = support / antecedent_support
                                 consequent_rsup = get_rsup(frequent_itemsets, consequent)
                                 lift = confidence / consequent_rsup
-                                leverage = rsup - (antecedent_support / len(database) * consequent_rsup)
 
                                 profits = calculate_profits(consequent, prices)
                                 conviction = (1 - consequent_rsup) / (1 - confidence) if confidence < 1 else float('inf')
 
-                                if confidence >= min_confidence and leverage > 0 and lift > 1:
-                                    rules.append((antecedent, consequent, profits, confidence, lift, leverage, conviction))
+                                if confidence >= min_confidence and lift > 1:
+                                    rules.append((antecedent, consequent, profits, confidence, lift, conviction))
             # Ordenar las reglas por ganancia (profits) de mayor a menor
             rules.sort(key=lambda x: x[2], reverse=True)
             return rules
@@ -83,10 +82,10 @@ class Recommender:
             print(f"{str(itemset):<20} {support:<10} {rsup:<10.2f}")
 
         # Imprimir reglas de asociación
-        print(f"{'Antecedent':<20} {'Consequent':<20} {'Profit':<10} {'Confidence':<10} {'Lift':<10} {'Leverage':<10} {'Conviction':<10}")
+        print(f"{'Antecedent':<20} {'Consequent':<20} {'Profit':<10} {'Confidence':<10} {'Lift':<10} {'Conviction':<10}")
         for rule in self.rules:
-            antecedent, consequent, profits, confidence, lift, leverage, conviction = rule
-            print(f"{str(antecedent):<20} {str(consequent):<20} {profits:<10.2f} {confidence:<10.2f} {lift:<10.2f} {leverage:<10.2f} {conviction:<10.2f}")
+            antecedent, consequent, profits, confidence, lift, conviction = rule
+            print(f"{str(antecedent):<20} {str(consequent):<20} {profits:<10.2f} {confidence:<10.2f} {lift:<10.2f} {conviction:<10.2f}")
 
         return self
 
@@ -95,7 +94,7 @@ class Recommender:
         cart_set = set(cart)
 
         for rule in self.rules:
-            antecedent, consequent, profits, confidence, lift, leverage, conviction = rule
+            antecedent, consequent, profits, confidence, lift, conviction = rule
             if set(antecedent).issubset(cart_set):
                 for item in consequent:
                     if item not in cart_set:
