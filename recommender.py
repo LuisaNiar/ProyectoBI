@@ -32,10 +32,10 @@ class Recommender:
                                 conviction = (1 - consequent_rsup) / (1 - confidence) if confidence < 1 else float('inf')
 
                                 if confidence >= min_confidence and lift > 1:
-                                    combined_metric = profits + confidence
+                                    combined_metric = confidence + lift
                                     rules.append((antecedent, consequent, profits, confidence, lift, conviction, combined_metric, support))
-            # Ordenar las reglas primero por ganancias y luego por confianza y luego por soporte de mayor a menor
-            rules.sort(key=lambda x: (x[2], x[3]), reverse=True)
+            # Ordenar las reglas primero por ganancias y luego por confianza + lift y luego por soporte de mayor a menor
+            rules.sort(key=lambda x: (x[2], x[6]), reverse=True)
             return rules
 
         def calculate_profits(consequent, prices):
@@ -84,7 +84,7 @@ class Recommender:
             print(f"{str(itemset):<20} {support:<10} {rsup:<10.2f}")
 
         # Imprimir reglas de asociación
-        print(f"{'Antecedent':<20} {'Consequent':<20} {'Profit':<10} {'Confidence':<10} {'Lift':<10} {'Conviction':<10} {'Profit + Confidence':<10} {'Support':<10}")
+        print(f"{'Antecedent':<20} {'Consequent':<20} {'Profit':<10} {'Confidence':<10} {'Lift':<10} {'Conviction':<10} {'Confidence + Lift':<10} {'Support':<10}")
         for rule in self.rules:
             antecedent, consequent, profits, confidence, lift, conviction, combined_metric, support = rule
             print(f"{str(antecedent):<20} {str(consequent):<20} {profits:<10.2f} {confidence:<10.2f} {lift:<10.2f} {conviction:<10.2f} {combined_metric:<10.2f} {support:<10}")
@@ -102,7 +102,7 @@ class Recommender:
                     if item not in cart_set:
                         recommendations[item] += combined_metric
 
-        # Ordenar recomendaciones por ganancias + confianza
+        # Ordenar recomendaciones por confianza + lift
         sorted_recommendations = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)
         recommended_items = [item for item, _ in sorted_recommendations[:max_recommendations]]
 
