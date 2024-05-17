@@ -1,5 +1,6 @@
 import numpy as np
 import itertools
+import pandas as pd
 from collections import defaultdict
 
 class Recommender:
@@ -70,8 +71,30 @@ class Recommender:
         # Generar reglas de asociación a partir de los itemsets frecuentes
         rules = generate_association_rules(F, min_confidence)
 
+        # Convertir el conjunto de itemsets frecuentes a un DataFrame
+        df_frequent_itemsets = pd.DataFrame(F, columns=['Itemset', 'Support', 'Relative Support'])
+
+        # Imprimir el DataFrame
+        print("Conjunto de itemsets frecuentes:")
+        print(df_frequent_itemsets)
+
+        # Convertir el conjunto de reglas a un DataFrame
+        df_rules = pd.DataFrame(rules,
+                                columns=['Antecedent', 'Consequent', 'Profits', 'Confidence', 'Lift', 'Leverage'])
+
+        # Filtrar reglas con leverage negativo
+        df_rules = df_rules[df_rules['Leverage'] >= 0]
+
+        # Imprimir el DataFrame de reglas filtrado
+        print("Reglas de asociación:")
+        print(df_rules)
+
+        # Ordenar las reglas primero por ganancias y luego por confianza + lift y luego por soporte de mayor a menor
+        rules.sort(key=lambda x: (x[2], x[3] + x[4], x[1]), reverse=True)
+
         self.rules = rules
         self.prices = prices
+
         return self
 
     def get_recommendations(self, cart: list, max_recommendations: int) -> list:
@@ -83,9 +106,14 @@ class Recommender:
             if set(antecedent).issubset(cart_set):
                 for item in consequent:
                     if item not in cart_set:
-                        recommendations[item] += lift
+                        recommendations[item] += profits
 
         sorted_recommendations = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)
         recommended_items = [item for item, _ in sorted_recommendations[:max_recommendations]]
+
+        print("Sorted Recommendations:")
+        print(sorted_recommendations)
+        print("Recommended Items:")
+        print(recommended_items)
 
         return recommended_items
