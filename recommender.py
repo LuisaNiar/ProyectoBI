@@ -35,7 +35,8 @@ class Recommender:
 
                                 # Calculate odds ratio
                                 support_both = support / len(database)
-                                odds_ratio = (support_both * (1 - rsup - consequent_rsup + support_both)) / ((rsup - support_both) * (consequent_rsup - support_both))
+                                denom_odds_ratio = (rsup - support_both) * (consequent_rsup - support_both)
+                                odds_ratio = (support_both * (1 - rsup - consequent_rsup + support_both)) / denom_odds_ratio if denom_odds_ratio != 0 else 0
 
                                 # Calculate Jaccard index
                                 jaccard = support / (antecedent_support + consequent_support - support)
