@@ -40,7 +40,7 @@ class Recommender:
                                     combined_metric = confidence + lift
                                     rules.append((antecedent, consequent, profits, confidence, lift, conviction, combined_metric, jaccard, support))
             # Ordenar las reglas primero por ganancias y luego por confianza + lift y luego por soporte de mayor a menor
-            rules.sort(key=lambda x: (x[2] * x[8], x[6]), reverse=True)
+            rules.sort(key=lambda x: (x[2] * x[3], x[6]), reverse=True)
             return rules
 
         def calculate_profits(consequent, prices):
@@ -105,7 +105,7 @@ class Recommender:
             if set(antecedent).issubset(cart_set):
                 for item in consequent:
                     if item not in cart_set:
-                        recommendations[item] += profits * jaccard  # Ajustar por Jaccard
+                        recommendations[item] += profits * confidence  # Ajustar por la confianza
 
         sorted_recommendations = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)
         recommended_items = [item for item, _ in sorted_recommendations[:max_recommendations]]
