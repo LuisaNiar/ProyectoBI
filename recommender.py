@@ -89,8 +89,8 @@ class Recommender:
         print("Reglas de asociación:")
         print(df_rules)
 
-        # Ordenar las reglas primero por ganancias y luego por confianza + lift y luego por soporte de mayor a menor
-        rules.sort(key=lambda x: (x[2], x[3] + x[4], x[1]), reverse=True)
+        # Ordenar las reglas primero por la longitud del consecuente, luego por ganancias, luego por confianza + lift y finalmente por soporte
+        rules.sort(key=lambda x: (len(x[1]), x[2], x[3] + x[4], x[1]), reverse=True)
 
         self.rules = rules
         self.prices = prices
@@ -106,7 +106,7 @@ class Recommender:
             if set(antecedent).issubset(cart_set):
                 for item in consequent:
                     if item not in cart_set:
-                        recommendations[item] = profits*confidence
+                        recommendations[item] = profits
 
         sorted_recommendations = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)
         recommended_items = [item for item, _ in sorted_recommendations[:max_recommendations]]
