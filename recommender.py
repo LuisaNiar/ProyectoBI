@@ -52,9 +52,9 @@ class Recommender:
                     return rsup
             return 0
 
-        # Definir el umbral mínimo de soporte como el 20% de la longitud de la lista de precios
-        minsup = max(1, int(0.2 * len(prices)))
-        min_confidence = 0.1
+        # Incrementar el umbral mínimo de soporte para reducir la cantidad de itemsets frecuentes
+        minsup = max(1, int(0.3 * len(prices)))
+        min_confidence = 0.2  # Incrementar la confianza mínima para reducir la cantidad de reglas generadas
 
         # Inicializar P con los ítems únicos y sus transacciones
         P = defaultdict(set)
