@@ -34,9 +34,6 @@ class Recommender:
                                 if confidence >= min_confidence and leverage > 0 and lift > 1:
                                     rules.append((antecedent, consequent, profits, confidence, lift, leverage))
             return rules
-        
-        # Ordenar las reglas primero por ganancias y luego por confianza + lift y luego por soporte de mayor a menor
-        rules.sort(key=lambda x: (x[2], x[6], x[7]), reverse=True)
 
         def calculate_profits(consequent, prices):
             return sum(prices[item_id] for item_id in consequent)
@@ -73,7 +70,7 @@ class Recommender:
 
         # Generar reglas de asociación a partir de los itemsets frecuentes
         rules = generate_association_rules(F, min_confidence)
-        
+
         # Convertir el conjunto de itemsets frecuentes a un DataFrame
         df_frequent_itemsets = pd.DataFrame(F, columns=['Itemset', 'Support', 'Relative Support'])
 
@@ -92,12 +89,15 @@ class Recommender:
         print("Reglas de asociación:")
         print(df_rules)
 
+        # Ordenar las reglas primero por ganancias y luego por confianza + lift y luego por soporte de mayor a menor
+        rules.sort(key=lambda x: (x[2], x[3] + x[4], x[1]), reverse=True)
+
         self.rules = rules
         self.prices = prices
-        
+
         return self
 
-    def get_recommendations(self, cart: list, max_recommendations: int) -> list:
+    def get_recommendations(self, cart: list, max_recommendations: int = 3) -> list:
         recommendations = defaultdict(float)
         cart_set = set(cart)
 
@@ -106,15 +106,15 @@ class Recommender:
             if set(antecedent).issubset(cart_set):
                 for item in consequent:
                     if item not in cart_set:
-                        recommendations[item] += profits
+                        recommendations[item] = profits
 
-        sorted_recommendations = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)
+        # Filtrar recomendaciones por precio y seleccionar las tres con mayor precio
+        sorted_recommendations = sorted(recommendations.items(), key=lambda x: self.prices[x[0]], reverse=True)
         recommended_items = [item for item, _ in sorted_recommendations[:max_recommendations]]
-        
-        print("Sorted Recommendations:")
-        print(sorted_recommendations)
-        print("Recommended Items:")
-        print(recommended_items)
 
+        print("Sorted Recommendations by Price:")
+        print(sorted_recommendations)
+        print("Recommended Items by Price:")
+        print(recommended_items)
 
         return recommended_items
