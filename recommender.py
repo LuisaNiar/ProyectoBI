@@ -25,13 +25,23 @@ class Recommender:
                             if consequent:
                                 antecedent_support = get_support(frequent_itemsets, antecedent)
                                 confidence = support / antecedent_support
-                                consequent_rsup = get_rsup(frequent_itemsets, consequent)
+                                consequent_support = get_support(frequent_itemsets, consequent)
+                                consequent_rsup = consequent_support / len(database)
                                 lift = confidence / consequent_rsup
                                 leverage = rsup - (antecedent_support / len(database) * consequent_rsup)
+
+                                # Calculate profits
                                 profits = sum(prices[item_id] for item_id in consequent)
 
+                                # Calculate odds ratio
+                                support_both = support / len(database)
+                                odds_ratio = (support_both * (1 - rsup - consequent_rsup + support_both)) / ((rsup - support_both) * (consequent_rsup - support_both))
+
+                                # Calculate Jaccard index
+                                jaccard = support / (antecedent_support + consequent_support - support)
+
                                 if confidence >= min_confidence and leverage > 0 and lift > 1:
-                                    rules.append((antecedent, consequent, profits, confidence, lift, leverage))
+                                    rules.append((antecedent, consequent, profits, confidence, lift, leverage, odds_ratio, jaccard))
             return rules
 
         def get_support(frequent_itemsets, itemset):
@@ -39,13 +49,6 @@ class Recommender:
             for fi, support, _ in frequent_itemsets:
                 if set(fi) == itemset_set:
                     return support
-            return 0
-
-        def get_rsup(frequent_itemsets, itemset):
-            itemset_set = set(itemset)
-            for fi, _, rsup in frequent_itemsets:
-                if set(fi) == itemset_set:
-                    return rsup
             return 0
 
         # Define minimum support and confidence
@@ -81,7 +84,7 @@ class Recommender:
         print("Frequent itemsets:")
         print(df_frequent_itemsets)
 
-        df_rules = pd.DataFrame(rules, columns=['Antecedent', 'Consequent', 'Profits', 'Confidence', 'Lift', 'Leverage'])
+        df_rules = pd.DataFrame(rules, columns=['Antecedent', 'Consequent', 'Profits', 'Confidence', 'Lift', 'Leverage', 'Odds Ratio', 'Jaccard'])
         print("Association rules:")
         print(df_rules)
 
@@ -92,7 +95,7 @@ class Recommender:
         cart_set = set(cart)
 
         for rule in self.rules:
-            antecedent, consequent, profits, _, _, _ = rule
+            antecedent, consequent, profits, _, _, _, _, _ = rule
             if set(antecedent).issubset(cart_set):
                 for item in consequent:
                     if item not in cart_set:
