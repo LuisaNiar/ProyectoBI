@@ -28,15 +28,11 @@ class Recommender:
                                 consequent_rsup = get_rsup(frequent_itemsets, consequent)
                                 lift = confidence / consequent_rsup
                                 leverage = rsup - (antecedent_support / len(database) * consequent_rsup)
-
-                                profits = calculate_profits(consequent, prices)
+                                profits = sum(prices[item_id] for item_id in consequent)
 
                                 if confidence >= min_confidence and leverage > 0 and lift > 1:
                                     rules.append((antecedent, consequent, profits, confidence, lift, leverage))
             return rules
-
-        def calculate_profits(consequent, prices):
-            return sum(prices[item_id] for item_id in consequent)
 
         def get_support(frequent_itemsets, itemset):
             itemset_set = set(itemset)
@@ -52,11 +48,11 @@ class Recommender:
                     return rsup
             return 0
 
-        # Definir el umbral mínimo de soporte como el 20% de la longitud de la lista de precios
+        # Define minimum support and confidence
         minsup = max(1, int(0.2 * len(prices)))
-        min_confidence = 0.05
+        min_confidence = 0.1
 
-        # Inicializar P con los ítems únicos y sus transacciones
+        # Initialize P with unique items and their transactions
         P = defaultdict(set)
         for tid, transaction in enumerate(database):
             for item in transaction:
@@ -64,36 +60,30 @@ class Recommender:
 
         num_transactions = len(database)
 
-        # Calcular los itemsets frecuentes utilizando el algoritmo Eclat
+        # Calculate frequent itemsets using the Eclat algorithm
         F = []
         eclat(P, minsup, [], F, num_transactions)
 
-        # Generar reglas de asociación a partir de los itemsets frecuentes
+        # Generate association rules from the frequent itemsets
         rules = generate_association_rules(F, min_confidence)
 
-        # Convertir el conjunto de itemsets frecuentes a un DataFrame
-        df_frequent_itemsets = pd.DataFrame(F, columns=['Itemset', 'Support', 'Relative Support'])
+        # Filter out rules with negative leverage
+        rules = [rule for rule in rules if rule[5] >= 0]
 
-        # Imprimir el DataFrame
-        print("Conjunto de itemsets frecuentes:")
-        print(df_frequent_itemsets)
-
-        # Convertir el conjunto de reglas a un DataFrame
-        df_rules = pd.DataFrame(rules,
-                                columns=['Antecedent', 'Consequent', 'Profits', 'Confidence', 'Lift', 'Leverage'])
-
-        # Filtrar reglas con leverage negativo
-        df_rules = df_rules[df_rules['Leverage'] >= 0]
-
-        # Imprimir el DataFrame de reglas filtrado
-        print("Reglas de asociación:")
-        print(df_rules)
-
-        # Ordenar las reglas primero por ganancias y luego por confianza + lift y luego por soporte de mayor a menor
+        # Sort the rules first by profits, then by confidence + lift, then by support
         rules.sort(key=lambda x: (x[2], x[3] + x[4], x[1]), reverse=True)
 
         self.rules = rules
         self.prices = prices
+
+        # Print frequent itemsets and rules (optional, can be commented out)
+        df_frequent_itemsets = pd.DataFrame(F, columns=['Itemset', 'Support', 'Relative Support'])
+        print("Frequent itemsets:")
+        print(df_frequent_itemsets)
+
+        df_rules = pd.DataFrame(rules, columns=['Antecedent', 'Consequent', 'Profits', 'Confidence', 'Lift', 'Leverage'])
+        print("Association rules:")
+        print(df_rules)
 
         return self
 
@@ -102,13 +92,13 @@ class Recommender:
         cart_set = set(cart)
 
         for rule in self.rules:
-            antecedent, consequent, profits, confidence, lift, leverage = rule
+            antecedent, consequent, profits, _, _, _ = rule
             if set(antecedent).issubset(cart_set):
                 for item in consequent:
                     if item not in cart_set:
                         recommendations[item] = profits
 
-        # Filtrar recomendaciones por precio y seleccionar las tres con mayor precio
+        # Filter recommendations by price and select the top items
         sorted_recommendations = sorted(recommendations.items(), key=lambda x: self.prices[x[0]], reverse=True)
         recommended_items = [item for item, _ in sorted_recommendations[:max_recommendations]]
 
