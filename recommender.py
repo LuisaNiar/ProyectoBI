@@ -24,21 +24,21 @@ class Recommender:
                             consequent = tuple(sorted(set(itemset) - set(antecedent)))
                             if consequent:
                                 antecedent_support = get_support(frequent_itemsets, antecedent)
-                                consequent_support = get_support(frequent_itemsets, consequent)
-                                rule_support = support
-                                confidence = rule_support / antecedent_support
-                                lift = confidence / consequent_support
+                                confidence = support / antecedent_support
+                                consequent_rsup = get_rsup(frequent_itemsets, consequent)
+                                lift = confidence / consequent_rsup
 
-                                jaccard_numerator = rule_support
-                                jaccard_denominator = antecedent_support + consequent_support - rule_support
-                                jaccard_coefficient = jaccard_numerator / jaccard_denominator if jaccard_denominator != 0 else 0
+                                # Calcular Jaccard
+                                intersection_support = get_support(frequent_itemsets, antecedent + consequent)
+                                union_support = antecedent_support + consequent_rsup - intersection_support
+                                jaccard = intersection_support / union_support
 
                                 profits = calculate_profits(consequent, prices)
-                                conviction = (1 - consequent_support) / (1 - confidence) if confidence < 1 else float('inf')
+                                conviction = (1 - consequent_rsup) / (1 - confidence) if confidence < 1 else float('inf')
 
                                 if confidence >= min_confidence and lift > 1:
                                     combined_metric = confidence + lift
-                                    rules.append((antecedent, consequent, profits, confidence, lift, conviction, combined_metric, jaccard_coefficient, support))
+                                    rules.append((antecedent, consequent, profits, confidence, lift, conviction, combined_metric, jaccard, support))
             # Ordenar las reglas primero por ganancias y luego por confianza + lift y luego por soporte de mayor a menor
             rules.sort(key=lambda x: (x[2], x[6], x[7]), reverse=True)
             return rules
@@ -89,10 +89,10 @@ class Recommender:
             print(f"{str(itemset):<20} {support:<10} {rsup:<10.2f}")
 
         # Imprimir reglas de asociación
-        print(f"{'Antecedent':<20} {'Consequent':<20} {'Profit':<10} {'Confidence':<10} {'Lift':<10} {'Conviction':<10} {'Confidence + Lift':<10} {'Jaccard Coefficient':<10} {'Support':<10}")
+        print(f"{'Antecedent':<20} {'Consequent':<20} {'Profit':<10} {'Confidence':<10} {'Lift':<10} {'Conviction':<10} {'Confidence + Lift':<15} {'Jaccard':<10} {'Support':<10}")
         for rule in self.rules:
-            antecedent, consequent, profits, confidence, lift, conviction, combined_metric, jaccard_coefficient, support = rule
-            print(f"{str(antecedent):<20} {str(consequent):<20} {profits:<10.2f} {confidence:<10.2f} {lift:<10.2f} {conviction:<10.2f} {combined_metric:<10.2f} {jaccard_coefficient:<10.2f} {support:<10}")
+            antecedent, consequent, profits, confidence, lift, conviction, combined_metric, jaccard, support = rule
+            print(f"{str(antecedent):<20} {str(consequent):<20} {profits:<10.2f} {confidence:<10.2f} {lift:<10.2f} {conviction:<10.2f} {combined_metric:<15.2f} {jaccard:<10.2f} {support:<10}")
 
         return self
 
@@ -100,21 +100,12 @@ class Recommender:
         recommendations = defaultdict(float)
         cart_set = set(cart)
 
-        strong_recommendations = []
-
         for rule in self.rules:
-            antecedent, consequent, profits, confidence, lift, conviction, combined_metric, jaccard_coefficient, support = rule
+            antecedent, consequent, profits, confidence, lift, conviction, combined_metric, jaccard, support = rule
             if set(antecedent).issubset(cart_set):
-                strong_recommendations.append((rule, profits))
-
-        # Ordenar las recomendaciones fuertes por confianza y lift
-        strong_recommendations.sort(key=lambda x: (x[0][3], x[0][4]), reverse=True)
-
-        for rule, profits in strong_recommendations:
-            antecedent, consequent, _, _, _, _, _, _, _ = rule
-            for item in consequent:
-                if item not in cart_set:
-                    recommendations[item] += profits
+                for item in consequent:
+                    if item not in cart_set:
+                        recommendations[item] += profits
 
         sorted_recommendations = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)
         recommended_items = [item for item, _ in sorted_recommendations[:max_recommendations]]
