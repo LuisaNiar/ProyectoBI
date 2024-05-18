@@ -30,3 +30,35 @@ class Recommender:
                                 profits = calculate_profits(consequent, prices)
 
                                 if confidence >= min_confidence and leverage > 0 and lift > 1:
+                                    rules.append((antecedent, consequent, profits, confidence, lift, leverage))
+            return rules
+        def calculate_profits(consequent, prices):
+            return sum(prices[item_id] for item_id in consequent)
+        def get_support(frequent_itemsets, itemset):
+            itemset_set = set(itemset)
+            for fi, support, _ in frequent_itemsets:
+                if set(fi) == itemset_set:
+                    return support
+            return 0
+        def get_rsup(frequent_itemsets, itemset):
+            itemset_set = set(itemset)
+            for fi, _, rsup in frequent_itemsets:
+                if set(fi) == itemset_set:
+                    return rsup
+            return 0
+        # Definir el umbral mínimo de soporte como el 20% de la longitud de la lista de precios
+        minsup = max(1, int(0.2 * len(prices)))
+        min_confidence = 0.1
+        # Inicializar P con los ítems únicos y sus transacciones
+        P = defaultdict(set)
+        for tid, transaction in enumerate(database):
+            for item in transaction:
+                P[item].add(tid)
+        num_transactions = len(database)
+        # Calcular los itemsets frecuentes utilizando el algoritmo Eclat
+        F = []
+        eclat(P, minsup, [], F, num_transactions)
+        # Generar reglas de asociación a partir de los itemsets frecuentes
+        rules = generate_association_rules(F, min_confidence)
+        # Convertir el conjunto de itemsets frecuentes a un DataFrame
+        df_frequent_itemsets = pd.DataFrame(F, columns=['Itemset', 'Support', 'Relative Support'])
