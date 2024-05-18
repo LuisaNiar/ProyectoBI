@@ -24,23 +24,23 @@ class Recommender:
                             consequent = tuple(sorted(set(itemset) - set(antecedent)))
                             if consequent:
                                 antecedent_support = get_support(frequent_itemsets, antecedent)
+                                consequent_support = get_support(frequent_itemsets, consequent)
+                                support_both = support / len(database)
+                                support_either = (antecedent_support + consequent_support - support_both)
+                                oddsratio = support_both / (1 - support_both) * (1 - support_both) / support_either
+
                                 confidence = support / antecedent_support
                                 consequent_rsup = get_rsup(frequent_itemsets, consequent)
                                 lift = confidence / consequent_rsup
-
-                                # Calcular Jaccard
-                                intersection_support = get_support(frequent_itemsets, antecedent + consequent)
-                                union_support = antecedent_support + consequent_rsup - intersection_support
-                                jaccard = intersection_support / union_support
 
                                 profits = calculate_profits(consequent, prices)
                                 conviction = (1 - consequent_rsup) / (1 - confidence) if confidence < 1 else float('inf')
 
                                 if confidence >= min_confidence and lift > 1:
                                     combined_metric = confidence + lift
-                                    rules.append((antecedent, consequent, profits, confidence, lift, conviction, combined_metric, jaccard, support))
+                                    rules.append((antecedent, consequent, profits, confidence, lift, conviction, combined_metric, support, oddsratio))
             # Ordenar las reglas primero por ganancias y luego por confianza + lift y luego por soporte de mayor a menor
-            rules.sort(key=lambda x: (x[2] * x[3], x[6]), reverse=True)
+            rules.sort(key=lambda x: (x[2], x[6], x[7]), reverse=True)
             return rules
 
         def calculate_profits(consequent, prices):
@@ -89,10 +89,10 @@ class Recommender:
             print(f"{str(itemset):<20} {support:<10} {rsup:<10.2f}")
 
         # Imprimir reglas de asociación
-        print(f"{'Antecedent':<20} {'Consequent':<20} {'Profit':<10} {'Confidence':<10} {'Lift':<10} {'Conviction':<10} {'Confidence + Lift':<15} {'Jaccard':<10} {'Support':<10}")
+        print(f"{'Antecedent':<20} {'Consequent':<20} {'Profit':<10} {'Confidence':<10} {'Lift':<10} {'Conviction':<10} {'Confidence + Lift':<10} {'Support':<10} {'Odds Ratio':<10}")
         for rule in self.rules:
-            antecedent, consequent, profits, confidence, lift, conviction, combined_metric, jaccard, support = rule
-            print(f"{str(antecedent):<20} {str(consequent):<20} {profits:<10.2f} {confidence:<10.2f} {lift:<10.2f} {conviction:<10.2f} {combined_metric:<15.2f} {jaccard:<10.2f} {support:<10}")
+            antecedent, consequent, profits, confidence, lift, conviction, combined_metric, support, oddsratio = rule
+            print(f"{str(antecedent):<20} {str(consequent):<20} {profits:<10.2f} {confidence:<10.2f} {lift:<10.2f} {conviction:<10.2f} {combined_metric:<10.2f} {support:<10} {oddsratio:<10.2f}")
 
         return self
 
@@ -101,11 +101,11 @@ class Recommender:
         cart_set = set(cart)
 
         for rule in self.rules:
-            antecedent, consequent, profits, confidence, lift, conviction, combined_metric, jaccard, support = rule
+            antecedent, consequent, profits, confidence, lift, conviction, combined_metric, support, oddsratio = rule
             if set(antecedent).issubset(cart_set):
                 for item in consequent:
                     if item not in cart_set:
-                        recommendations[item] += profits * confidence  # Ajustar por la confianza
+                        recommendations[item] += profits
 
         sorted_recommendations = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)
         recommended_items = [item for item, _ in sorted_recommendations[:max_recommendations]]
