@@ -94,7 +94,6 @@ class Recommender:
 
         self.rules = rules
         self.prices = prices
-        self.lift = lift
 
         return self
 
